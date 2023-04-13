@@ -10,7 +10,8 @@ def joining(list):
 
 # Folder containing the files to be concatenated
 #script_path = r"/home/asyaturhal/desktop/ai/last_developed/ai8x-training/scripts_test"
-script_path = r"/home/asyaturhal/desktop/ai/last_developed/scripts_test"
+#script_path = r"/home/asyaturhal/desktop/ai/last_developed/scripts_test"
+script_path = r"/home/asyaturhal/desktop/ai/last_developed/test_codes/scripts_test"
 
 # Output file name and path
 output_file_path = r"/home/asyaturhal/desktop/ai/last_developed/dev_scripts/last_dev_train.sh"
