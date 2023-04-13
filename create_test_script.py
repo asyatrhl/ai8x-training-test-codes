@@ -5,7 +5,8 @@ def joining(list):
     return str
 
 # Folder containing the files to be concatenated
-folder_path = r"/home/asyaturhal/actions-runner/_work/ai8x-training/ai8x-training/scripts_test"
+folder_path = r"/home/asyaturhal/actions-runner/_work/ai8x-training/ai8x-training/test_codes/scripts_test"
+#folder_path = r"/home/asyaturhal/actions-runner/_work/ai8x-training/ai8x-training/scripts_test"
 
 # Output file name and path
 output_file_path = r"/home/asyaturhal/actions-runner/_work/ai8x-training/ai8x-training/scripts/output_file.sh"
