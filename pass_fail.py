@@ -27,7 +27,7 @@ def check_top_value(file, threshold):
     """
     with open(file, 'r', encoding='utf-8') as f:
 
-        model_name = file.split('/')[-1].split('.')[0]
+        model_name = file.split('/')[-1].split('___')[0]
         # Read all lines in the file
         lines = f.readlines()
         # Extract the last line and convert it to a float
@@ -40,14 +40,16 @@ def check_top_value(file, threshold):
         print(f"\033[31m\u2718\033[0m Test failed for {model_name} since in"
               f" Top1 value changed {top1_diff} at {epoch_num}th epoch.")
         return False
-    print(f"\033[31m\u2718\033[0m Test failed for {model_name} since in"
+    print(f"\033[32m\u2714\033[0m Test passed for {model_name} since in"
           f" Top1 value changed {top1_diff} at {epoch_num}th epoch.")
     return True
 
 
 for logs in sorted(os.listdir(log_path)):
-    if logs in config:
-        threshold_temp = float(list(config['{logs}']["threshold"])[0])
+    log_name = (logs.split("___"))[0]
+    if log_name in config:
+        threshold_temp = float(config[f'{log_name}']["threshold"])
+        # threshold_temp = float(list(config['{log_name}']["threshold"])[0])
     else:
         threshold_temp = 0
     logs = log_path + '/' + str(logs)
