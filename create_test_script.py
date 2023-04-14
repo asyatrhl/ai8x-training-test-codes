@@ -23,7 +23,7 @@ def joining(lst):
 # Folder containing the files to be concatenated
 folder_path = (
     r"/home/asyaturhal/actions-runner/_work/"
-    r"ai8x-training/ai8x-training/scripts_test"
+    r"ai8x-training/ai8x-training/test_codes/scripts_test"
 )
 
 
