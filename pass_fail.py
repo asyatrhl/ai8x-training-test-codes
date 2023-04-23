@@ -11,6 +11,8 @@ Check the test results
 """
 import configparser
 import os
+from log_check import not_found_model
+
 
 # config_path = r'C:\Users\aturhal\Desktop\ai\source\test_config.conf'
 config_path = r'/home/asyaturhal/desktop/ai/test_config.conf'
@@ -44,6 +46,8 @@ def check_top_value(file, threshold):
           f" Top1 value changed {top1_diff} at {epoch_num}th epoch.")
     return True
 
+for item in not_found_model:
+    print("\033[93m\u26A0\033[0m " + "Warning: " + item)
 
 for logs in sorted(os.listdir(log_path)):
     log_name = (logs.split("___"))[0]
