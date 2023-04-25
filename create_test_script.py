@@ -26,7 +26,7 @@ config = configparser.ConfigParser()
 config.read(config_path)
 
 # Folder containing the files to be concatenated
-folder_path = (
+script_path = (
     r"/home/asyaturhal/actions-runner/_work/"
     r"ai8x-training/ai8x-training/test_codes/scripts_test"
 )
