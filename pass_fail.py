@@ -15,7 +15,7 @@ from log_check import not_found_model
 
 
 # config_path = r'C:\Users\aturhal\Desktop\ai\source\test_config.conf'
-config_path = r'/home/asyaturhal/actions-runner/_work/ai8x-training/ai8x-training/test_codes/'
+config_path = r'/home/asyaturhal/actions-runner/_work/ai8x-training/ai8x-training/test_codes/test_config.conf'
 config = configparser.ConfigParser()
 config.read(config_path)
 log_path = r'/home/asyaturhal/desktop/ai/log_diff'
