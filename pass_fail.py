@@ -11,7 +11,7 @@ Check the test results
 """
 import configparser
 import os
-from log_check import not_found_model
+from log_comparison import not_found_model
 
 
 # config_path = r'C:\Users\aturhal\Desktop\ai\source\test_config.conf'
