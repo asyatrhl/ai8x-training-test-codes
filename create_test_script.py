@@ -21,7 +21,7 @@ def joining(lst):
     return join_str
 
 
-config_path = r'/home/asyaturhal/actions-runner/_work/ai8x-training/ai8x-training/test_codes/'
+config_path = r'/home/asyaturhal/actions-runner/_work/ai8x-training/ai8x-training/test_codes/test_config.conf'
 config = configparser.ConfigParser()
 config.read(config_path)
 
