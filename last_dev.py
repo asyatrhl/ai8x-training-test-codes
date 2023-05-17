@@ -10,10 +10,9 @@
 Create the last developed code logs for base testing source
 """
 import datetime
+import git
 import os
 import subprocess
-
-import git
 
 
 def joining(lst):
@@ -23,10 +22,19 @@ def joining(lst):
     join_str = ' '.join(lst)
     return join_str
 
+# parser = argparse.ArgumentParser()
+# parser.add_argument('--testconf', help='Enter the config file for the test', required=True)
+# args = parser.parse_args()
+# yaml_path = args.testconf
+
+# # Open the YAML file
+# with open(yaml_path, 'r') as file:
+#     # Load the YAML content into a Python dictionary
+#     config = yaml.safe_load(file)
 
 # Folder containing the files to be concatenated
 # script_path = r"/home/asyaturhal/desktop/ai/last_developed/ai8x-training/scripts_test"
-script_path = r"/home/asyaturhal/desktop/ai/last_developed/test_codes/scripts_test"
+script_path = r"/home/asyaturhal/desktop/ai/last_developed/last_dev_source/scripts"
 
 # Output file name and path
 output_file_path = r"/home/asyaturhal/desktop/ai/last_developed/dev_scripts/last_dev_train.sh"
@@ -35,39 +43,50 @@ output_file_path = r"/home/asyaturhal/desktop/ai/last_developed/dev_scripts/last
 log_file_names = []
 
 
-# Loop through all files in the folder
 def dev_scripts(script_pth, output_file_pth):
     """
     Create training scripts for the last developed code
-    """
-    with open(output_file_pth, "w", encoding='utf-8') as output_file:
-        for filename in sorted(os.listdir(script_pth)):
+    """                                  
+    with open(output_file_path, "w", encoding='utf-8') as output_file:
+        for filename in os.listdir(script_path):
             # Check if the file is a text file
             if filename.startswith("train"):
-                with open(os.path.join(script_pth, filename), "r", encoding='utf-8') as input_file:
+                # Open the file and read its contents
+                with open(os.path.join(script_path, filename), encoding='utf-8') as input_file:
                     contents = input_file.read()
 
-                temp = contents.split()
-                temp.insert(1, "\n")
-                i = temp.index('--epochs')
-                j = temp.index('--model')
-                k = temp.index('--dataset')
+                    temp = contents.split()
+                    temp.insert(1, "\n")
+                    i = temp.index('--epochs')
+                    j = temp.index('--model')
+                    k = temp.index('--dataset')
 
-                log_name = temp[j+1] + '-' + temp[k+1]
+                    log_model = temp[j+1]
+                    log_data = temp[k+1]
 
-                log_file_names.append(filename[:-3])
+                    log_name = temp[j+1] + '-' + temp[k+1]
+                    log_file_names.append(filename[:-3])
 
-                if '--deterministic' not in temp:
-                    temp.insert(-2, '--deterministic')
+                    if log_data == "FaceID":
+                        continue
 
-                temp.insert(-1, '--name ' + log_name)
+                    temp[i+1] = "15"
 
-                # temp[i+1] = str(int(temp[i+1])*10/100)
-                temp[i+1] = str(5)
-                temp.append("\n")
-                contents = joining(temp)
+                    if '--deterministic' not in temp:
+                        temp.insert(-2, '--deterministic')
 
-                output_file.write(contents)
+                    temp.insert(-1, '--name ' + log_name)
+
+                    data_name = temp[k+1]
+
+                    # temp.insert(-1, '--data ' + path_data)
+
+                    temp.append("\n")
+                    contents = joining(temp)
+                    # Replace the number in the "--epochs" script
+
+                    # Write the contents to the output file
+                    output_file.write(contents)
 
 
 def dev_checkout():
@@ -103,6 +122,8 @@ def dev_checkout():
             )
             subprocess.run(cmd_command, shell=True, check=True)
 
+)
+            
             source_path = "/home/asyaturhal/actions-runner/_work/ai8x-training/ai8x-training/logs/"
             destination_path = (
                 "/home/asyaturhal/desktop/ai/last_developed/dev_logs/"
@@ -111,4 +132,4 @@ def dev_checkout():
             subprocess.run(['mv', source_path, destination_path], check=True)
 
 
-dev_checkout()
+dev_checkout() 
