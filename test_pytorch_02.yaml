@@ -1,4 +1,3 @@
-
 ---
 name: auto-testing
 on:
@@ -9,18 +8,30 @@ jobs:
     runs-on: self-hosted
     #container: docker://dvcorg/cml-py3:latest
     steps:
-      - name: Checkout rotx-maxim/ai8x-training
+#       - name: Checkout rotx-maxim/ai8x-training
+#         uses: actions/checkout@v2
+#         with:
+#           repository: rotx-maxim/ai8x-training
+#           ref: pytorch-2.0
+#           submodules: recursive
+      - name: Checkout MaximIntegratedAI/ai8x-training
         uses: actions/checkout@v2
         with:
-          repository: rotx-maxim/ai8x-training
+          repository: MaximIntegratedAI/ai8x-training
           ref: pytorch-2.0
-          submodules: recursive
+          submodules: recursive         
       - name: Checkout Test Codes
         uses: actions/checkout@v2
         with:
           repository: asyatrhl/ai8x-training-test-codes
           ref: main
           path: test_codes
+      - name: Checkout Test Codes
+        uses: actions/checkout@v2
+        with:
+          repository: asyatrhl/regression-test
+          ref: main
+          path: last-dev
       - name: Setup Pyenv and Install Dependencies
         uses: gabrielfalcao/pyenv-action@v13
         with:
@@ -35,12 +46,14 @@ jobs:
       - name: Check Pytorch version
         run: pip list | grep torch
       - name: Last Develop Check
-        run: python ./test_codes/last_dev.py
+        run: python ./test_codes/last_dev.py --testconf ./last-dev/test_config.yaml
+      - name: deneme
+        run: python train.py --epochs 1 --deterministic --optimizer Adam --lr 0.00064 --wd 0 --compress policies/schedule-cifar100-ressimplenet.yaml --model ai85ressimplenet --dataset CIFAR100 --device MAX78000 --batch-size 32 --print-freq 100 --validation-split 0 --name ai85ressimplenet-CIFAR100 --data /data_ssd "$@" 
       - name: Create Test Script
-        run: python ./test_codes/create_test_script.py
+        run: python ./test_codes/create_test_script.py --testconf ./last-dev/test_config.yaml
       - name: Run Training Scripts
         run: bash
-          /home/asyaturhal/actions-runner/_work/ai8x-training/ai8x-training/scripts/output_file.sh
+          /home/asyaturhal/desktop/ai/test_scripts/output_file.sh
       - name: Save Log Files
         run: cp -r
           /home/asyaturhal/actions-runner/_work/ai8x-training/ai8x-training/logs/
@@ -48,9 +61,9 @@ jobs:
       - name: Log Diff
         run: python ./test_codes/log_comparison.py
       - name: Test Results
-        run: python ./test_codes/pass_fail.py
+        run: python ./test_codes/pass_fail.py --testconf ./last-dev/test_config.yaml
       - name: Create ONNX script
-        run: python ./test_codes/create_onnx_scripts.py
+        run: python ./test_codes/create_onnx_scripts.py --testconf ./last-dev/test_config.yaml
       - name: Run ONNX
         run: bash
           /home/asyaturhal/actions-runner/_work/ai8x-training/ai8x-training/scripts/onnx_scripts.sh
