@@ -66,7 +66,7 @@ with open(output_file_path, "w", encoding='utf-8') as output_file:
                     x = temp.index('--qat-policy')
                     temp[x+1] = "policies/qat_policy.yaml"
                 else:
-                    temp.insert(-1, ' --qat-policy policies/qat_policy.yaml')
+                    temp.insert(-1, ' --qat-policy /home/asyaturhal/desktop/ai/test_scripts/qat_policy.yaml')
 
                 log_model = temp[j+1]
                 log_data = temp[k+1]
