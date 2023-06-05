@@ -81,6 +81,9 @@ with open(output_file_path, "w", encoding='utf-8') as output_file:
                 if log_data == "FaceID":
                     continue
 
+                if log_data == "VGGFace2_FaceDetection":
+                    continue
+
                 temp[i+1] = str(config[log_data][log_model]["epoch"])
 
                 if '--deterministic' not in temp:
