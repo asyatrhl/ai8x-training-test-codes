@@ -63,8 +63,8 @@ with open(output_file_path, "w", encoding='utf-8') as output_file:
                 k = temp.index('--dataset')
 
                 if '--qat-policy' in temp:
-                    x = temp.index('--qat-policy /home/asyaturhal/desktop/ai/test_scripts/qat_policy.yaml')
-                    temp[x+1] = "policies/qat_policy.yaml"
+                    x = temp.index('--qat-policy ')
+                    temp[x+1] = "/home/asyaturhal/desktop/ai/test_scripts/qat_policy.yaml"
                 else:
                     temp.insert(-1, ' --qat-policy /home/asyaturhal/desktop/ai/test_scripts/qat_policy.yaml')
 
