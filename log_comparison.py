@@ -9,7 +9,6 @@
 """
 Compare log files of the pulled code and the last developed
 """
-import argparse
 import datetime
 import os
 import sys
@@ -17,16 +16,6 @@ import sys
 import yaml
 
 from tabulate import tabulate
-
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--testpaths', help='Enter the paths for the test', required=True)
-args = parser.parse_args()
-test_path = args.testpaths
-
-with open(test_path, 'r') as file2:
-    # Load the YAML content into a Python dictionary
-    pathconfig = yaml.safe_load(file2)
 
 
 def compare_logs(old_log, new_log, output_name, output_pth):
@@ -141,14 +130,15 @@ def log_path_list(path):
     return lst
 
 
-log_new = testpaths["log_new"]
-log_old = testpaths["log_old"]
-script_path = testpaths["script_path"]
+log_new = r'/home/asyaturhal/desktop/ai/test_logs/'
+log_old = r'/home/asyaturhal/desktop/ai/last_developed/dev_logs/'
+# script_path = r"/home/asyaturhal/desktop/ai/test_scripts/output_file.sh"
+script_path = r'/home/asyaturhal/actions-runner/_work/ai8x-training/ai8x-training/scripts/output_file.sh'
 
 time = str(datetime.datetime.now())
 time = time.replace(' ', '.')
 time = time.replace(':', '.')
-output_path = testpaths["output_path"] + '/' + str(time)
+output_path = r"/home/asyaturhal/desktop/ai/log_diff/" + '/' + str(time)
 
 os.mkdir(output_path)
 
