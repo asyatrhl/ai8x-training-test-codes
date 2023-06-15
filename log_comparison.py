@@ -9,10 +9,24 @@
 """
 Compare log files of the pulled code and the last developed
 """
+import argparser
 import datetime
 import os
+import sys
+
+import yaml
 
 from tabulate import tabulate
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--testpaths', help='Enter the paths for the test', required=True)
+args = parser.parse_args()
+test_path = args.testpaths
+
+with open(test_path, 'r') as file2:
+    # Load the YAML content into a Python dictionary
+    pathconfig = yaml.safe_load(file2)
 
 
 def compare_logs(old_log, new_log, output_name, output_pth):
@@ -38,7 +52,7 @@ def compare_logs(old_log, new_log, output_name, output_pth):
 
     if all(ex_list):
         print("\033[31m Cancelling github actions.")
-        exit(1)    
+        sys.exit(1)
 
     with open(old_log, 'r', encoding='utf-8') as f1, open(new_log, 'r', encoding='utf-8') as f2:
         file1_content = f1.readlines()
@@ -73,7 +87,7 @@ def compare_logs(old_log, new_log, output_name, output_pth):
                 lst = line.split()
                 mAP_list2.append(lst[5:7])
                 map_value = True
-     
+
         epoch_num_top = min(len(log1_list), len(log2_list))
         epoch_num_map = min(len(mAP_list1), len(mAP_list2))
 
@@ -93,7 +107,7 @@ def compare_logs(old_log, new_log, output_name, output_pth):
                 top1_diff = ((float(list2[1])-float(list1[1]))/float(list1[1]))*100
                 top1.append([i])
                 top1[i-1].append(top1_diff)
-            
+
             if 'Top5:' in list2:
                 top5_diff = ((float(list2[3])-float(list1[3]))/float(list1[1]))*100
                 top1[i-1].append(top5_diff)
@@ -103,7 +117,6 @@ def compare_logs(old_log, new_log, output_name, output_pth):
             output_file.write(tabulate(top1, headers=header))
 
     if map_value:
-
         i = 0
         for (map1, map2) in zip(mAP_list1, mAP_list2):
             i = i+1
@@ -128,15 +141,14 @@ def log_path_list(path):
     return lst
 
 
-log_new = r'/home/asyaturhal/desktop/ai/test_logs/'
-log_old = r'/home/asyaturhal/desktop/ai/last_developed/dev_logs/'
-# script_path = r"/home/asyaturhal/desktop/ai/test_scripts/output_file.sh"
-script_path = r'/home/asyaturhal/actions-runner/_work/ai8x-training/ai8x-training/scripts/output_file.sh'
+log_new = testpaths["log_new"]
+log_old = testpaths["log_old"]
+script_path = testpaths["script_path"]
 
 time = str(datetime.datetime.now())
 time = time.replace(' ', '.')
 time = time.replace(':', '.')
-output_path = r"/home/asyaturhal/desktop/ai/log_diff/" + '/' + str(time)
+output_path = testpaths["output_path"] + '/' + str(time)
 
 os.mkdir(output_path)
 
@@ -148,9 +160,9 @@ new_logs_path = log_new + loglist[-1]
 new_log_list = log_path_list(new_logs_path)
 old_log_list = log_path_list(old_logs_path)
 
-with open(script_path, 'r') as f:
-    scripts = f.read()
-    scripts = scripts.split(' ')
+with open(script_path, 'r', encoding='utf-8') as f:
+    scripts_t = f.read()
+    scripts = scripts_t.split(' ')
 name_indices = [i+1 for i, x in enumerate(scripts) if x == "--name"]
 values = [scripts[j] for j in name_indices]
 
@@ -161,9 +173,9 @@ for log in values:
               " There is an error in training.")
         ex_list2.append(True)
 
-        if all(ex_list2):
-            print("\033[31m Cancelling github actions.")
-            exit(1)    
+if all(ex_list2):
+    print("\033[31m Cancelling github actions.")
+    sys.exit(1)
 
 not_found_model = []
 map_value_list = {}
@@ -188,5 +200,7 @@ for files_new in sorted(os.listdir(new_logs_path)):
             old_path_log = old_path + '/' + old_log_file
             new_path_log = new_path + '/' + new_log_file
 
-            map_value_list[files_new_temp] = compare_logs(old_path_log, new_path_log, files_new, output_path)
+            map_value_list[files_new_temp] = compare_logs(
+                old_path_log, new_path_log, files_new, output_path
+            )
             break
