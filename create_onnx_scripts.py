@@ -1,18 +1,18 @@
 ###################################################################################################
 #
-# Copyright (C) 2020 Maxim Integrated Products, Inc. All Rights Reserved.
-#
-# Maxim Integrated Products, Inc. Default Copyright Notice:
-# https://www.maximintegrated.com/en/aboutus/legal/copyrights.html
+# Copyright (C) 2023 Analog Devices, Inc. All Rights Reserved.
+# This software is proprietary and confidential to Analog Devices, Inc. and its licensors.
 #
 ###################################################################################################
 """
 Create onnx bash scripts for test
 """
-import datetime
 import argparse
+import datetime
 import os
 import subprocess
+import sys
+
 import yaml
 
 
@@ -36,27 +36,28 @@ def time_stamp():
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--testconf', help='Enter the config file for the test', required=True)
+parser.add_argument('--testpaths', help='Enter the paths for the test', required=True)
 args = parser.parse_args()
 yaml_path = args.testconf
+test_path = args.testpaths
 
 # Open the YAML file
-with open(yaml_path, 'r') as file:
+with open(yaml_path, 'r', encoding='utf-8') as yaml_file:
     # Load the YAML content into a Python dictionary
-    config = yaml.safe_load(file)
+    config = yaml.safe_load(yaml_file)
+
+with open(test_path, 'r', encoding='utf-8') as path_file:
+    # Load the YAML content into a Python dictionary
+    pathconfig = yaml.safe_load(path_file)
 
 if not config["Onnx_Status"]:
-    exit(0)
+    sys.exit(1)
 
-#  folder_path = r"./logs"
-folder_path = r"/home/asyaturhal/desktop/ai/test_logs/"
-output_file_path = (
-    r"./scripts/onnx_scripts.sh"
-)
-train_path = (
-    r"/home/asyaturhal/desktop/ai/test_scripts/output_file.sh"
-)
+folder_path = pathconfig["folder_path"]
+output_file_path = pathconfig["output_file_path_onnx"]
+train_path = pathconfig["train_path"]
 
-logs_list = folder_path + '/' + sorted(os.listdir(folder_path))[-1]
+logs_list = os.path.join(folder_path, sorted(os.listdir(folder_path))[-1])
 
 models = []
 datasets = []
@@ -91,11 +92,11 @@ with open(output_file_path, "w", encoding='utf-8') as onnx_scripts:
         else:
             bias.append("")
 
-    for file in sorted(os.listdir(logs_list)):
-        temp_path = logs_list + "/" + file
+    for file_p in sorted(os.listdir(logs_list)):
+        temp_path = os.path.join(logs_list, file_p)
         for temp_file in sorted(os.listdir(temp_path)):
             if temp_file.endswith("_checkpoint.pth.tar"):
-                temp = f"{temp_path}/{temp_file}"
+                temp = os.path.join(temp_path, temp_file)
                 model_paths.append(temp)
                 tar_names.append(temp_file)
 
@@ -107,7 +108,6 @@ with open(output_file_path, "w", encoding='utf-8') as onnx_scripts:
             modelsearch = element[-4][3:]
             datasearch = element[-3].split('_')[0]
             if datasearch == dataset.split('_')[0] and modelsearch == model:
-                model_paths.remove(tar)
                 tar_path = tar
                 timestamp = time_stamp()
                 temp = (
@@ -122,8 +122,6 @@ with open(output_file_path, "w", encoding='utf-8') as onnx_scripts:
                     f"{bias_value}\n"
                 )
                 onnx_scripts.write(temp)
-cmd_command = (
-    "bash ./scripts/onnx_scripts.sh"
-)
+cmd_command = "bash " + output_file_path
 
 subprocess.run(cmd_command, shell=True, check=True)
