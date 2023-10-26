@@ -1,9 +1,7 @@
 ###################################################################################################
 #
-# Copyright (C) 2020 Maxim Integrated Products, Inc. All Rights Reserved.
-#
-# Maxim Integrated Products, Inc. Default Copyright Notice:
-# https://www.maximintegrated.com/en/aboutus/legal/copyrights.html
+# Copyright (C) 2023 Analog Devices, Inc. All Rights Reserved.
+# This software is proprietary and confidential to Analog Devices, Inc. and its licensors.
 #
 ###################################################################################################
 """
@@ -11,41 +9,49 @@ Check the test results
 """
 import argparse
 import os
+import sys
+
 import yaml
-
-from log_comparison import not_found_model, map_value_list
-
+from log_comparison import map_value_list, not_found_model
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--testconf', help='Enter the config file for the test', required=True)
+parser.add_argument('--testpaths', help='Enter the paths for the test', required=True)
 args = parser.parse_args()
 yaml_path = args.testconf
+test_path = args.testpaths
 
 # Open the YAML file
-with open(yaml_path, 'r') as file:
+with open(yaml_path, 'r', encoding='utf-8') as yaml_file:
     # Load the YAML content into a Python dictionary
-    config = yaml.safe_load(file)
+    config = yaml.safe_load(yaml_file)
 
-log_path = r'/home/asyaturhal/desktop/ai/log_diff'
-# log_path = r'C:\Users\aturhal\Desktop\test_logs'
-log_path = log_path + '/' + sorted(os.listdir(log_path))[-1]
+with open(test_path, 'r', encoding='utf-8') as path_file:
+    # Load the YAML content into a Python dictionary
+    pathconfig = yaml.safe_load(path_file)
+
+log_path = pathconfig["log_path"]
+log_path = os.path.join(log_path, sorted(os.listdir(log_path))[-1])
 
 
-def check_top_value(file, threshold, map_value):
+def check_top_value(diff_file, threshold, map_value):
     """
     Compare Top1 value with threshold
     """
     if not map_value:
-        with open(file, 'r', encoding='utf-8') as f:
-
-            model_name = file.split('/')[-1].split('___')[0]
-            # Read all lines in the file
+        with open(diff_file, 'r', encoding='utf-8') as f:
+            model_name = diff_file.split('/')[-1].split('___')[0]
+            # Read all lines in the diff_file
             lines = f.readlines()
             # Extract the last line and convert it to a float
             top1 = lines[-1].split()
-            epoch_num = int(top1[0])
+            try:
+                epoch_num = int(top1[0])
+            except ValueError:
+                print(f"\033[31m\u2718\033[0m Test failed for {model_name}: "
+                      f"Cannot convert {top1[0]} to an epoch number.")
+                return False
             top1_diff = float(top1[1])
-            # top5_diff = float(top1[2])
 
         if top1_diff < threshold:
             print(f"\033[31m\u2718\033[0m Test failed for {model_name} since"
@@ -54,29 +60,32 @@ def check_top_value(file, threshold, map_value):
         print(f"\033[32m\u2714\033[0m Test passed for {model_name} since"
               f" Top1 value changed {top1_diff} % at {epoch_num}th epoch.")
         return True
-    if map_value:
-        with open(file, 'r', encoding='utf-8') as f:
 
-            model_name = file.split('/')[-1].split('___')[0]
-            # Read all lines in the file
-            lines = f.readlines()
-            # Extract the last line and convert it to a float
-            top1 = lines[-1].split()
+    with open(diff_file, 'r', encoding='utf-8') as f:
+        model_name = diff_file.split('/')[-1].split('___')[0]
+        # Read all lines in the diff_file
+        lines = f.readlines()
+        # Extract the last line and convert it to a float
+        top1 = lines[-1].split()
+        try:
             epoch_num = int(top1[0])
-            top1_diff = float(top1[1])
-            # top5_diff = float(top1[2])
-
-        if top1_diff < threshold:
-            print(f"\033[31m\u2718\033[0m Test failed for {model_name} since"
-                  f" mAP value changed {top1_diff} % at {epoch_num}th epoch.")
+        except ValueError:
+            print(f"\033[31m\u2718\033[0m Test failed for {model_name}: "
+                  f"Cannot convert {top1[0]} to an epoch number.")
             return False
-        print(f"\033[32m\u2714\033[0m Test passed for {model_name} since"
+        top1_diff = float(top1[1])
+        # top5_diff = float(top1[2])
+
+    if top1_diff < threshold:
+        print(f"\033[31m\u2718\033[0m Test failed for {model_name} since"
               f" mAP value changed {top1_diff} % at {epoch_num}th epoch.")
-        return True
+        return False
+    print(f"\033[32m\u2714\033[0m Test passed for {model_name} since"
+          f" mAP value changed {top1_diff} % at {epoch_num}th epoch.")
+    return True
 
 
 passing = []
-
 for item in not_found_model:
     print("\033[93m\u26A0\033[0m " + "Warning: " + item)
 
@@ -89,10 +98,10 @@ for logs in sorted(os.listdir(log_path)):
         threshold_temp = float(config[f'{log_data}'][f'{log_model}']['threshold'])
     else:
         threshold_temp = 0
-    logs = log_path + '/' + str(logs)
+    logs = os.path.join(log_path, str(logs))
     map_val = map_value_list[log_name]
     passing.append(check_top_value(logs, threshold_temp, map_val))
 
 if not all(passing):
-    print("\033[31mAll tests did not passed. Cancelling github actions.")
-    exit(1)
+    print("\033[31mOne or more tests did not pass. Cancelling github actions.")
+    sys.exit(1)
