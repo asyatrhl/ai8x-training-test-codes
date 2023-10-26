@@ -1,21 +1,35 @@
 ###################################################################################################
 #
-# Copyright (C) 2020-2022 Maxim Integrated Products, Inc. All Rights Reserved.
-#
-# Maxim Integrated Products, Inc. Default Copyright Notice:
-# https://www.maximintegrated.com/en/aboutus/legal/copyrights.html
+# Copyright (C) 2023 Analog Devices, Inc. All Rights Reserved.
+# This software is proprietary and confidential to Analog Devices, Inc. and its licensors.
 #
 ###################################################################################################
 """
 Compare log files of the pulled code and the last developed
 """
+import argparse
 import datetime
 import os
 import sys
 
 import yaml
-
 from tabulate import tabulate
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--testconf', help='Enter the config file for the test', required=True)
+parser.add_argument('--testpaths', help='Enter the paths for the test', required=True)
+args = parser.parse_args()
+yaml_path = args.testconf
+test_path = args.testpaths
+
+# Open the YAML file
+with open(yaml_path, 'r', encoding='utf-8') as yaml_file:
+    # Load the YAML content into a Python dictionary
+    config = yaml.safe_load(yaml_file)
+
+with open(test_path, 'r', encoding='utf-8') as path_file:
+    # Load the YAML content into a Python dictionary
+    pathconfig = yaml.safe_load(path_file)
 
 
 def compare_logs(old_log, new_log, output_name, output_pth):
@@ -31,10 +45,10 @@ def compare_logs(old_log, new_log, output_name, output_pth):
     ex_list = [False]
 
     with open(new_log, 'r', encoding='utf-8') as f2:
-        file2 = f2.read()
+        file2_content = f2.read()
         log_name = new_log.split('/')[-1].split('___')[0]
 
-        if word2 not in file2 and word3 not in file2:
+        if word2 not in file2_content and word3 not in file2_content:
             print(f"\033[31m\u2718\033[0m {log_name} does not have any trained results."
                   " There is an error in training.")
             ex_list.append(True)
@@ -92,8 +106,8 @@ def compare_logs(old_log, new_log, output_name, output_pth):
         i = 0
         for (list1, list2) in zip(log1_list, log2_list):
             if float(list1[1]) == 0:
-                  print("Top1 value of " + output_name + " is 0.00 .")
-                  list1[1] = 0.000001
+                print("Top1 value of " + output_name + " is 0.00.")
+                list1[1] = 0.000001
             i = i+1
             if '[Top1:' in list2:
                 top1_diff = ((float(list2[1])-float(list1[1]))/float(list1[1]))*100
@@ -104,7 +118,7 @@ def compare_logs(old_log, new_log, output_name, output_pth):
                 top5_diff = ((float(list2[3])-float(list1[3]))/float(list1[1]))*100
                 top1[i-1].append(top5_diff)
 
-        output_path_2 = output_pth + '/' + output_name + '.txt'
+        output_path_2 = os.path.join(output_pth, (output_name + '.txt'))
         with open(output_path_2, "w", encoding='utf-8') as output_file:
             output_file.write(tabulate(top1, headers=header))
 
@@ -112,15 +126,15 @@ def compare_logs(old_log, new_log, output_name, output_pth):
         i = 0
         for (map1, map2) in zip(mAP_list1, mAP_list2):
             if float(map1[1]) == 0:
-                  print("Map value of " + output_name + " is 0.00 .")
-                  map1[1] = 0.00001
+                print(f"Map value of {output_name} is 0.00 at epoch {i}.")
+                map1[1] = 0.000001
             i = i+1
             if '[mAP:' in map2:
                 map_diff = ((float(map2[1])-float(map1[1]))/float(map1[1]))*100
                 map_list.append([i])
                 map_list[i-1].append(map_diff)
 
-        output_path_2 = output_pth + '/' + output_name + '.txt'
+        output_path_2 = os.path.join(output_pth, (output_name + '.txt'))
         with open(output_path_2, "w", encoding='utf-8') as output_file:
             output_file.write(tabulate(map_list, headers=header_map))
     return map_value
@@ -136,15 +150,14 @@ def log_path_list(path):
     return lst
 
 
-log_new = r'/home/asyaturhal/desktop/ai/test_logs/'
-log_old = r'/home/asyaturhal/desktop/ai/last_developed/dev_logs/'
-# script_path = r"/home/asyaturhal/desktop/ai/test_scripts/output_file.sh"
-script_path = r'/home/asyaturhal/actions-runner/_work/ai8x-training/ai8x-training/scripts/output_file.sh'
+log_new = pathconfig["log_new"]
+log_old = pathconfig["log_old"]
+script_path = pathconfig["script_path_log"]
 
 time = str(datetime.datetime.now())
 time = time.replace(' ', '.')
 time = time.replace(':', '.')
-output_path = r"/home/asyaturhal/desktop/ai/log_diff/" + '/' + str(time)
+output_path = pathconfig["output_path"] + '/' + str(time)
 
 os.mkdir(output_path)
 
@@ -184,8 +197,8 @@ for files_new in sorted(os.listdir(new_logs_path)):
         files_old_temp = files_old.split("___")[0]
         if files_old_temp == files_new_temp:
 
-            old_path = old_logs_path + '/' + files_old
-            new_path = new_logs_path + '/' + files_new
+            old_path = os.path.join(old_logs_path, files_old)
+            new_path = os.path.join(new_logs_path, files_new)
 
             old_files = sorted(os.listdir(old_path))
             new_files = sorted(os.listdir(new_path))
@@ -193,8 +206,8 @@ for files_new in sorted(os.listdir(new_logs_path)):
             old_log_file = [file for file in old_files if file.endswith(".log")][0]
             new_log_file = [file for file in new_files if file.endswith(".log")][0]
 
-            old_path_log = old_path + '/' + old_log_file
-            new_path_log = new_path + '/' + new_log_file
+            old_path_log = os.path.join(old_path, old_log_file)
+            new_path_log = os.path.join(new_path, new_log_file)
 
             map_value_list[files_new_temp] = compare_logs(
                 old_path_log, new_path_log, files_new, output_path
