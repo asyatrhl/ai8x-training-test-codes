@@ -1,9 +1,7 @@
 ###################################################################################################
 #
-# Copyright (C) 2020-2022 Maxim Integrated Products, Inc. All Rights Reserved.
-#
-# Maxim Integrated Products, Inc. Default Copyright Notice:
-# https://www.maximintegrated.com/en/aboutus/legal/copyrights.html
+# Copyright (C) 2023 Analog Devices, Inc. All Rights Reserved.
+# This software is proprietary and confidential to Analog Devices, Inc. and its licensors.
 #
 ###################################################################################################
 """
@@ -11,6 +9,7 @@ Create training bash scripts for test
 """
 import argparse
 import os
+
 import yaml
 
 
@@ -24,25 +23,24 @@ def joining(lst):
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--testconf', help='Enter the config file for the test', required=True)
+parser.add_argument('--testpaths', help='Enter the paths for the test', required=True)
 args = parser.parse_args()
 yaml_path = args.testconf
+test_path = args.testpaths
 
 # Open the YAML file
-with open(yaml_path, 'r') as file:
+with open(yaml_path, 'r', encoding='utf-8') as yaml_file:
     # Load the YAML content into a Python dictionary
-    config = yaml.safe_load(file)
+    config = yaml.safe_load(yaml_file)
+
+with open(test_path, 'r', encoding='utf-8') as path_file:
+    # Load the YAML content into a Python dictionary
+    pathconfig = yaml.safe_load(path_file)
 
 # Folder containing the files to be concatenated
-script_path = (
-    r"./scripts"
-)
-
-
+script_path = pathconfig["script_path"]
 # Output file name and path
-output_file_path = (
-    r"./scripts/output_file.sh"
-)
-
+output_file_path = pathconfig["output_file_path"]
 
 # global log_file_names
 log_file_names = []
@@ -62,16 +60,17 @@ with open(output_file_path, "w", encoding='utf-8') as output_file:
                 j = temp.index('--model')
                 k = temp.index('--dataset')
 
+                # if config["Qat_Test"]:
                 if '--qat-policy' in temp:
                     x = temp.index('--qat-policy')
-                    temp[x+1] = "/home/asyaturhal/desktop/ai/test_scripts/qat_policy.yaml"
+                    temp[x+1] = "policies/qat_policy.yaml"
                 else:
-                    temp.insert(-1, ' --qat-policy /home/asyaturhal/desktop/ai/test_scripts/qat_policy.yaml')
+                    temp.insert(-1, ' --qat-policy policies/qat_policy.yaml')
 
                 log_model = temp[j+1]
                 log_data = temp[k+1]
-                
-                if log_model == "ai87imageneteffnetv2" :
+
+                if log_model == "ai87imageneteffnetv2":
                     num = temp.index("--batch-size")
                     temp[num+1] = "128"
 
@@ -84,21 +83,28 @@ with open(output_file_path, "w", encoding='utf-8') as output_file:
                 if log_data == "VGGFace2_FaceDetection":
                     continue
 
-                temp[i+1] = str(config[log_data][log_model]["epoch"])
+                try:
+                    temp[i+1] = str(config[log_data][log_model]["epoch"])
+                except KeyError:
+                    print(f"\033[93m\u26A0\033[0m Warning: {temp[j+1]} model is" +
+                          " missing information in test configuration files.")
+                    continue
 
                 if '--deterministic' not in temp:
                     temp.insert(-1, '--deterministic')
 
                 temp.insert(-1, '--name ' + log_name)
 
-                data_name = temp[k+1]
-                if data_name in config and "datapath" in config[data_name]:
+                try:
                     path_data = config[log_data]["datapath"]
-                    temp.insert(-1, '--data ' + path_data)
+                    temp[i+1] = str(config[log_data][log_model]["epoch"])
+                except KeyError:
+                    print(f"\033[93m\u26A0\033[0m Warning: {temp[j+1]} model is" +
+                          " missing information in test configuration files.")
+                    continue
 
+                temp.insert(-1, '--data ' + path_data)
                 temp.append("\n")
-                contents = joining(temp)
-                # Replace the number in the "--epochs" script
 
-                # Write the contents to the output file
+                contents = joining(temp)
                 output_file.write(contents)
